@@ -224,13 +224,13 @@ export function ChatMessages({
   }
 
   return (
-    <div ref={scrollContainerRef} className="flex-1 overflow-y-auto relative">
+    <div ref={scrollContainerRef} className="h-full overflow-y-auto relative">
       <ScrollToBottomButton
         scrollContainerRef={scrollContainerRef}
         onScrollToBottom={scrollToBottom}
         isSidebarCollapsed={isSidebarCollapsed}
       />
-      <div className="w-full max-w-4xl mx-auto px-6 py-8 space-y-6">
+      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-4 sm:py-8 space-y-4 sm:space-y-6 min-h-full">
         {conversationMessages.map((message, index) => (
           <MessageItem
             key={message.id}

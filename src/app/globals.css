@@ -39,6 +39,71 @@ body {
   overflow-x: hidden;
 }
 
+/* Responsive Layout Utilities */
+@media (max-width: 768px) {
+  .sidebar-responsive {
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 40;
+    transform: translateX(-100%);
+  }
+  
+  .sidebar-responsive.open {
+    transform: translateX(0);
+  }
+  
+  /* Ensure sidebar is always on top when open on mobile */
+  .sidebar-mobile-overlay {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+  }
+}
+
+/* Prevent horizontal overflow */
+@media (max-width: 1024px) {
+  body {
+    overflow-x: hidden;
+  }
+  
+  /* Ensure proper spacing for content when sidebar is visible */
+  .main-content-responsive {
+    transition: margin-left 0.3s ease-in-out;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+  .chat-container {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+}
+
+/* Chat layout stability */
+.chat-grid-layout {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  height: 100%;
+  overflow: hidden;
+}
+
+.chat-messages-container {
+  overflow: hidden;
+  position: relative;
+}
+
+.chat-input-container {
+  flex-shrink: 0;
+  position: relative;
+}
+
+/* Prevent textarea from affecting parent layout */
+.chat-input-wrapper {
+  contain: layout style;
+}
+
 /* Glassmorphism Utility Classes */
 .glass {
   background: var(--glass-bg);

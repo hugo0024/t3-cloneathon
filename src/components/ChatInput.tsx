@@ -716,8 +716,8 @@ export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
         onClose={() => setIsModelModalOpen(false)}
       />
 
-      <div className="px-4 pb-4 flex justify-center">
-        <div className="w-full max-w-4xl glass-strong backdrop-blur-xl rounded-2xl border border-white/10 p-4 shadow-xl">
+      <div className="px-3 sm:px-4 pb-3 sm:pb-4 flex justify-center chat-input-wrapper">
+        <div className="w-full max-w-4xl glass-strong backdrop-blur-xl rounded-2xl border border-white/10 p-3 sm:p-4 shadow-xl">
           <form
             onSubmit={isConsensusMode ? handleConsensusSubmit : handleSubmit}
             className="w-full"

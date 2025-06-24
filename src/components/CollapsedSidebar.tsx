@@ -23,7 +23,7 @@ export function CollapsedSidebar({
           animate={{ opacity: 1, x: 0, scale: 1 }}
           exit={{ opacity: 0, x: -50, scale: 0.8 }}
           transition={{ duration: 0.3, ease: 'easeInOut' }}
-          className="fixed left-4 top-4 z-50 flex flex-col gap-2"
+          className="fixed left-2 sm:left-4 top-4 z-50 flex flex-col gap-2"
         >
           <div className="relative group/expand">
             <motion.button
