@@ -81,7 +81,7 @@ export function ChatEmptyState({ onQuickAction }: ChatEmptyStateProps) {
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center p-8">
+    <div className="h-full flex items-center justify-center p-4 sm:p-8">
       <div className="text-center max-w-4xl w-full">
         <div className="w-20 h-20 mx-auto mb-6 glass-strong rounded-3xl flex items-center justify-center relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20"></div>

@@ -175,7 +175,7 @@ export function ChatMessages({
 
   if (isLoading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
+      <div className="h-full flex items-center justify-center">
         <div className="text-center">
           <div className="loading-dots mb-4">
             <span></span>
@@ -209,7 +209,7 @@ export function ChatMessages({
 
     if (!hasActiveOptimistic) {
       return (
-        <div className="flex-1 flex items-center justify-center">
+        <div className="h-full flex items-center justify-center">
           <div className="text-center">
             <div className="loading-dots mb-4">
               <span></span>
