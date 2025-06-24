@@ -730,14 +730,14 @@ export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
               onRemoveAttachment={removeAttachment}
             />
 
-            <div className="relative group/send">
+            <div className="relative group/send overflow-visible">
               <textarea
                 ref={textareaRef}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Type your message..."
                 disabled={isLoading}
-                className="w-full min-h-[40px] max-h-32 resize-none bg-transparent border-none outline-none focus:outline-none disabled:opacity-50 pr-24 text-white placeholder-white/60 p-3 overflow-y-auto scrollbar-thin"
+                className="w-full min-h-[40px] max-h-32 resize-none bg-transparent border-none outline-none focus:outline-none disabled:opacity-50 pr-20 text-white placeholder-white/60 p-3 overflow-y-auto scrollbar-thin"
                 rows={1}
                 style={{ scrollbarWidth: 'thin' }}
                 onKeyDown={(e) => {
@@ -752,7 +752,7 @@ export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
                 }}
               />
 
-              <div className="absolute right-3 top-1/2 translate-y-1 flex items-center gap-1">
+              <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1 z-10">
                 <FileUploadButton
                   selectedModel={selectedModel}
                   isLoading={isLoading}

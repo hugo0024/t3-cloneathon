@@ -93,7 +93,7 @@ body {
 .chat-input-container form {
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 @media (max-width: 768px) {
@@ -106,6 +106,21 @@ body {
   .chat-input-container {
     max-height: 200px;
   }
+}
+
+/* Ensure icons in input area are not clipped */
+.chat-input-container .group\/send {
+  overflow: visible !important;
+}
+
+.chat-input-container button {
+  position: relative;
+  z-index: 10;
+}
+
+/* Ensure tooltips are visible */
+.chat-input-container button .absolute {
+  z-index: 20;
 }
 
 /* Glassmorphism Utility Classes */

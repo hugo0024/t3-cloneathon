@@ -34,13 +34,13 @@ export function ChatModeToggle({
   const selectedModelInfo = formatModelName(selectedModel);
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
       <div className="relative group/consensus-toggle">
         <button
           type="button"
           onClick={onConsenusModeToggle}
           disabled={isLoading || activeConversation !== null}
-          className={`inline-flex items-center gap-2 px-3 py-2 border rounded-xl text-sm transition-all ${
+          className={`inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 border rounded-lg sm:rounded-xl text-xs sm:text-sm transition-all ${
             activeConversation !== null
               ? 'cursor-not-allowed opacity-50'
               : 'cursor-pointer'
@@ -51,10 +51,11 @@ export function ChatModeToggle({
           }`}
         >
           <Users
-            size={16}
-            className={isConsensusMode ? 'text-purple-400' : 'text-white/60'}
+            size={14}
+            className={`sm:w-4 sm:h-4 ${isConsensusMode ? 'text-purple-400' : 'text-white/60'}`}
           />
-          <span>Consensus Mode</span>
+          <span className="hidden sm:inline">Consensus Mode</span>
+          <span className="sm:hidden">Consensus</span>
         </button>
 
         {activeConversation !== null && (
@@ -70,18 +71,21 @@ export function ChatModeToggle({
             type="button"
             onClick={onMultiModelSelectorOpen}
             disabled={isLoading || activeConversation !== null}
-            className={`inline-flex items-center gap-2 px-3 py-2 border border-white/10 rounded-xl text-sm transition-all ${
+            className={`inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 border border-white/10 rounded-lg sm:rounded-xl text-xs sm:text-sm transition-all ${
               activeConversation !== null
                 ? 'cursor-not-allowed opacity-50 text-white/40'
                 : 'cursor-pointer glass-hover text-white/80 hover:text-white hover:scale-[1.02]'
             } ${isLoading || activeConversation !== null ? 'opacity-50' : ''}`}
           >
-            <Brain size={16} className="text-purple-400" />
-            <span>
+            <Brain size={14} className="text-purple-400 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">
               {selectedModels.length} Model
               {selectedModels.length !== 1 ? 's' : ''}
             </span>
-            <ChevronDown size={14} className="text-white/40" />
+            <span className="sm:hidden">
+              {selectedModels.length}M
+            </span>
+            <ChevronDown size={12} className="text-white/40 sm:w-3.5 sm:h-3.5" />
           </button>
 
           {activeConversation !== null && (
@@ -95,18 +99,18 @@ export function ChatModeToggle({
           <button
             onClick={onSingleModelSelectorOpen}
             disabled={isLoading || activeConversation !== null}
-            className={`inline-flex items-center gap-2 px-3 py-2 border border-white/10 rounded-xl text-sm transition-all ${
+            className={`inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 border border-white/10 rounded-lg sm:rounded-xl text-xs sm:text-sm transition-all ${
               activeConversation !== null
                 ? 'cursor-not-allowed opacity-50 text-white/40'
                 : 'cursor-pointer glass-hover text-white/80 hover:text-white hover:scale-[1.02]'
             } ${isLoading || activeConversation !== null ? 'opacity-50' : ''}`}
           >
-            <div className="w-5 h-5 flex items-center justify-center rounded flex-shrink-0">
+            <div className="w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center rounded flex-shrink-0">
               {selectedModelInfo.logo ? (
                 <img
                   src={selectedModelInfo.logo}
                   alt={`${selectedModelInfo.provider} logo`}
-                  className="w-4 h-4 object-contain"
+                  className="w-3 h-3 sm:w-4 sm:h-4 object-contain"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.style.display = 'none';
@@ -115,12 +119,13 @@ export function ChatModeToggle({
                 />
               ) : null}
               <Bot
-                size={14}
-                className={`text-blue-400 ${selectedModelInfo.logo ? 'hidden' : ''}`}
+                size={12}
+                className={`text-blue-400 sm:w-3.5 sm:h-3.5 ${selectedModelInfo.logo ? 'hidden' : ''}`}
               />
             </div>
-            <span>{selectedModelInfo.name}</span>
-            <ChevronDown size={14} className="text-white/40" />
+            <span className="hidden sm:inline">{selectedModelInfo.name}</span>
+            <span className="sm:hidden truncate max-w-[60px]">{selectedModelInfo.name.split('/')[1] || selectedModelInfo.name}</span>
+            <ChevronDown size={12} className="text-white/40 sm:w-3.5 sm:h-3.5" />
           </button>
 
           {activeConversation !== null && (
@@ -132,9 +137,14 @@ export function ChatModeToggle({
       )}
 
       {/* Quality Scoring Indicator */}
-      <div className="flex items-center gap-2 text-xs text-white/50 ml-3">
+      <div className="hidden sm:flex items-center gap-2 text-xs text-white/50 ml-3">
         <BarChart3 size={14} className="text-purple-400" />
         <span>Quality Analysis Enabled</span>
+      </div>
+      
+      {/* Mobile Quality Indicator - just icon */}
+      <div className="sm:hidden flex items-center">
+        <BarChart3 size={12} className="text-purple-400" />
       </div>
     </div>
   );
