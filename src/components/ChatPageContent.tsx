@@ -202,16 +202,18 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.2, type: 'spring', stiffness: 300, damping: 30 }}
-        className="flex-1 chat-grid-layout relative min-w-0"
+        className="flex-1 flex flex-col relative min-w-0 overflow-hidden h-screen"
       >
-        <div className="chat-messages-container">
+        {/* Messages Container - takes remaining space */}
+        <div className="flex-1 overflow-hidden min-h-0">
           <ChatMessages
             isSidebarCollapsed={isSidebarCollapsed}
             onQuickAction={handleQuickAction}
           />
         </div>
 
-        <div className="chat-input-container">
+        {/* Input Container - fixed height constraints */}
+        <div className="shrink-0 max-h-[300px] overflow-hidden">
           <ChatInput quickActionPrompt={quickActionPrompt} />
         </div>
       </motion.div>

@@ -81,27 +81,31 @@ body {
   }
 }
 
-/* Chat layout stability */
-.chat-grid-layout {
-  display: grid;
-  grid-template-rows: 1fr auto;
-  height: 100%;
-  overflow: hidden;
-}
-
-.chat-messages-container {
-  overflow: hidden;
-  position: relative;
-}
-
+/* Chat Input Responsive Constraints */
 .chat-input-container {
-  flex-shrink: 0;
-  position: relative;
+  max-height: 300px;
+  transition: height 0.2s ease-out;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Prevent textarea from affecting parent layout */
-.chat-input-wrapper {
-  contain: layout style;
+.chat-input-container form {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .chat-input-container {
+    max-height: 250px;
+  }
+}
+
+@media (max-width: 480px) {
+  .chat-input-container {
+    max-height: 200px;
+  }
 }
 
 /* Glassmorphism Utility Classes */

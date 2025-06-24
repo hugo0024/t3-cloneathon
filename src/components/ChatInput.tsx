@@ -155,7 +155,10 @@ export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+      const scrollHeight = textareaRef.current.scrollHeight;
+      // Constrain the height to a maximum of 128px (8rem)
+      const maxHeight = 128;
+      textareaRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
     }
   }, [message]);
 
@@ -716,8 +719,8 @@ export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
         onClose={() => setIsModelModalOpen(false)}
       />
 
-      <div className="px-3 sm:px-4 pb-3 sm:pb-4 flex justify-center chat-input-wrapper">
-        <div className="w-full max-w-4xl glass-strong backdrop-blur-xl rounded-2xl border border-white/10 p-3 sm:p-4 shadow-xl">
+      <div className="px-3 sm:px-4 pb-3 sm:pb-4 flex justify-center">
+        <div className="w-full max-w-4xl glass-strong backdrop-blur-xl rounded-2xl border border-white/10 p-3 sm:p-4 shadow-xl chat-input-container">
           <form
             onSubmit={isConsensusMode ? handleConsensusSubmit : handleSubmit}
             className="w-full"
@@ -734,8 +737,9 @@ export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Type your message..."
                 disabled={isLoading}
-                className="w-full min-h-[40px] max-h-32 resize-none bg-transparent border-none outline-none focus:outline-none disabled:opacity-50 pr-24 text-white placeholder-white/60 p-3"
+                className="w-full min-h-[40px] max-h-32 resize-none bg-transparent border-none outline-none focus:outline-none disabled:opacity-50 pr-24 text-white placeholder-white/60 p-3 overflow-y-auto scrollbar-thin"
                 rows={1}
+                style={{ scrollbarWidth: 'thin' }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
