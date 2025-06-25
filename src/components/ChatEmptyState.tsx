@@ -97,8 +97,7 @@ export function ChatEmptyState({ onQuickAction }: ChatEmptyStateProps) {
         </h3>
 
         <p className="text-white/60 leading-relaxed mb-8">
-          Start a new conversation to chat with various AI models through
-          OpenRouter. Choose your preferred model and begin chatting!
+          Start a new conversation to chat with various AI models. Choose your preferred model and begin chatting!
         </p>
 
         {/* Quick Actions */}

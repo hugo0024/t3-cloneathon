@@ -79,7 +79,6 @@ export interface Conversation {
 export interface Profile {
   id: string;
   email: string;
-  openrouter_api_key: string | null;
   created_at: string;
   updated_at: string;
 }

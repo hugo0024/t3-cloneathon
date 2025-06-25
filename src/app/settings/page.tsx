@@ -321,105 +321,7 @@ function ProfileSection() {
 }
 
 function ApiKeysSection() {
-  const { profile, refreshProfile } = useChat();
-  const [apiKey, setApiKey] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<
-    'idle' | 'saving' | 'saved' | 'error'
-  >('idle');
-
-  useEffect(() => {
-    if (profile?.openrouter_api_key) {
-      setApiKey(profile.openrouter_api_key);
-    }
-  }, [profile]);
-
-  const handleSave = async () => {
-    if (!apiKey.trim()) {
-      alert('Please enter your OpenRouter API key');
-      return;
-    }
-
-    setIsLoading(true);
-    setSaveStatus('saving');
-
-    try {
-      const response = await fetch('/api/profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          openrouter_api_key: apiKey.trim(),
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save API key');
-      }
-
-      await refreshProfile();
-      setSaveStatus('saved');
-
-      setTimeout(() => setSaveStatus('idle'), 2000);
-    } catch (error) {
-      console.error('Error saving API key:', error);
-      setSaveStatus('error');
-      alert(error instanceof Error ? error.message : 'Failed to save API key');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const getSaveButtonContent = () => {
-    switch (saveStatus) {
-      case 'saving':
-        return (
-          <>
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-              className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
-            />
-            Saving...
-          </>
-        );
-      case 'saved':
-        return (
-          <>
-            <CheckCircle size={16} />
-            Saved!
-          </>
-        );
-      case 'error':
-        return (
-          <>
-            <XCircle size={16} />
-            Error - Retry
-          </>
-        );
-      default:
-        return (
-          <>
-            <Save size={16} />
-            Save Changes
-          </>
-        );
-    }
-  };
-
-  const getSaveButtonClass = () => {
-    switch (saveStatus) {
-      case 'saved':
-        return 'bg-green-500 hover:bg-green-600';
-      case 'error':
-        return 'bg-red-500 hover:bg-red-600';
-      default:
-        return 'bg-blue-500 hover:bg-blue-600';
-    }
-  };
+  const { profile } = useChat();
 
   return (
     <motion.div
@@ -429,98 +331,77 @@ function ApiKeysSection() {
     >
       <div className="glass-strong rounded-2xl p-6">
         <div className="flex items-center justify-between mb-4">
-          <h4 className="text-lg font-medium text-white">OpenRouter API Key</h4>
-          <div
-            className={`px-3 py-1.5 rounded-lg font-medium text-sm flex items-center gap-2 ${
-              profile?.openrouter_api_key
-                ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                : 'bg-red-500/20 text-red-400 border border-red-500/30'
-            }`}
-          >
-            {profile?.openrouter_api_key ? (
-              <>
-                <CheckCircle size={14} />
-                Configured
-              </>
-            ) : (
-              <>
-                <XCircle size={14} />
-                Not configured
-              </>
-            )}
+          <h4 className="text-lg font-medium text-white">API Configuration</h4>
+          <div className="px-3 py-1.5 rounded-lg font-medium text-sm flex items-center gap-2 bg-green-500/20 text-green-400 border border-green-500/30">
+            <CheckCircle size={14} />
+            Configured (Server-side)
           </div>
         </div>
 
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-white/60 mb-2">
-              API Key
-            </label>
-            <div className="relative">
-              <input
-                type={showApiKey ? 'text' : 'password'}
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder="Enter your OpenRouter API key"
-                className="input-glass w-full pr-12 text-white placeholder-white/40"
-              />
-              <motion.button
-                type="button"
-                onClick={() => setShowApiKey(!showApiKey)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-white/80 transition-colors"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                {showApiKey ? <EyeOff size={20} /> : <Eye size={20} />}
-              </motion.button>
-            </div>
-            <p className="text-sm text-white/40 mt-2">
-              Your API key is encrypted and stored securely.
-            </p>
-          </div>
-
-          {profile?.openrouter_api_key && (
-            <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">
-                Current API Key
-              </label>
-              <div className="px-4 py-3 glass rounded-xl text-white/60 font-mono text-sm">
-                {profile.openrouter_api_key.slice(0, 4) +
-                  '•'.repeat(profile.openrouter_api_key.length - 8) +
-                  profile.openrouter_api_key.slice(-4)}
+          <div className="glass rounded-xl p-6 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-cyan-500/10"></div>
+            <div className="flex items-start gap-4 relative z-10">
+              <div className="w-12 h-12 glass-strong rounded-2xl flex items-center justify-center flex-shrink-0">
+                <Key size={20} className="text-blue-400" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-white mb-2">
+                  Server-Side API Configuration
+                </h3>
+                <p className="text-sm text-white/70 mb-4 leading-relaxed">
+                  The OpenRouter API key is securely configured on the server. You don't need to provide your own API key - just start chatting with AI models!
+                </p>
+                <div className="flex items-center gap-2 text-xs text-white/50">
+                  <CheckCircle size={12} />
+                  <span>20+ AI models available</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-white/50 mt-1">
+                  <CheckCircle size={12} />
+                  <span>No setup required</span>
+                </div>
               </div>
             </div>
-          )}
+          </div>
 
           <div className="glass rounded-xl p-4">
             <h5 className="text-sm font-medium text-white mb-2">
-              Need an API key?
+              Available Models
             </h5>
             <p className="text-xs text-white/60 mb-3">
-              Get your free OpenRouter API key to access various AI models
-              including GPT-4, Claude, and more.
+              Access to various AI models including GPT-4, Claude, Gemini, and more through our server-side OpenRouter integration.
             </p>
-            <motion.a
-              href="https://openrouter.ai/keys"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
-              whileHover={{ x: 4 }}
-            >
-              Get OpenRouter API Key
-              <ExternalLink size={14} />
-            </motion.a>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+              <div className="px-2 py-1 bg-white/5 rounded text-white/60">GPT-4</div>
+              <div className="px-2 py-1 bg-white/5 rounded text-white/60">Claude</div>
+              <div className="px-2 py-1 bg-white/5 rounded text-white/60">Gemini</div>
+              <div className="px-2 py-1 bg-white/5 rounded text-white/60">Llama</div>
+              <div className="px-2 py-1 bg-white/5 rounded text-white/60">Grok</div>
+              <div className="px-2 py-1 bg-white/5 rounded text-white/60">+ More</div>
+            </div>
           </div>
 
-          <motion.button
-            onClick={handleSave}
-            disabled={isLoading || !apiKey.trim()}
-            className={`cursor-pointer flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto ${getSaveButtonClass()}`}
-            whileHover={!isLoading ? { scale: 1.02, y: -1 } : {}}
-            whileTap={!isLoading ? { scale: 0.98 } : {}}
-          >
-            {getSaveButtonContent()}
-          </motion.button>
+          {profile && (
+            <div className="glass rounded-xl p-4">
+              <h5 className="text-sm font-medium text-white mb-2">
+                Account Status
+              </h5>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-white/60">Email:</span>
+                  <span className="font-mono text-white/80">
+                    {profile.email}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-white/60">API Access:</span>
+                  <span className="font-mono text-green-400">
+                    Enabled
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

@@ -24,22 +24,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get user's OpenRouter API key
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('openrouter_api_key')
-      .eq('id', user.id)
-      .single();
-
-    if (!profile?.openrouter_api_key) {
+    // Use server-side OpenRouter API key from environment variables
+    const openRouterApiKey = process.env.OPENROUTER_API_KEY;
+    
+    if (!openRouterApiKey) {
       return NextResponse.json(
-        { error: 'OpenRouter API key not configured' },
-        { status: 400 }
+        { error: 'OpenRouter API key not configured on server' },
+        { status: 500 }
       );
     }
 
     // Generate the title
-    const titleGenerator = new TitleGenerator(profile.openrouter_api_key);
+    const titleGenerator = new TitleGenerator(openRouterApiKey);
     const generatedTitle = await titleGenerator.generateTitle(
       userMessage,
       assistantResponse

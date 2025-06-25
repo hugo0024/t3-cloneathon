@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
-import { OpenRouterService } from '@/lib/openrouter';
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,7 +15,7 @@ export async function GET(request: NextRequest) {
 
     const { data: profile, error } = await supabase
       .from('profiles')
-      .select('id, email, openrouter_api_key, created_at, updated_at')
+      .select('id, email, created_at, updated_at')
       .eq('id', user.id)
       .single();
 
@@ -56,31 +55,12 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { openrouter_api_key } = await request.json();
-
-    if (!openrouter_api_key) {
-      return NextResponse.json(
-        { error: 'OpenRouter API key is required' },
-        { status: 400 }
-      );
-    }
-
-    const openRouter = new OpenRouterService(openrouter_api_key);
-    const isValid = await openRouter.validateApiKey();
-
-    if (!isValid) {
-      return NextResponse.json(
-        { error: 'Invalid OpenRouter API key' },
-        { status: 400 }
-      );
-    }
-
+    // For now, just ensure the profile exists without API key requirements
     const { data: profile, error } = await supabase
       .from('profiles')
       .upsert({
         id: user.id,
         email: user.email,
-        openrouter_api_key,
         updated_at: new Date().toISOString(),
       })
       .select()

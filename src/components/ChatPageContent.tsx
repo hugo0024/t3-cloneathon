@@ -71,9 +71,7 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
   }, [conversations, chatId, isLoading, setActiveConversation]);
 
   useEffect(() => {
-    if (!isLoading && profile && !profile.openrouter_api_key) {
-      setShowSettings(true);
-    }
+    // API key is now handled server-side, no need to check for it
   }, [profile, isLoading]);
 
   if (isLoading) {
@@ -95,69 +93,7 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
     );
   }
 
-  if (!profile?.openrouter_api_key) {
-    return (
-      <div className="h-screen flex items-center justify-center animated-bg">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center max-w-md mx-auto p-8"
-        >
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="w-20 h-20 mx-auto mb-6 glass rounded-3xl flex items-center justify-center"
-          >
-            <Key size={32} className="text-blue-400" />
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-2xl font-bold text-white mb-4"
-          >
-            Welcome to Convex Chat
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="text-white/60 mb-8 leading-relaxed"
-          >
-            To get started, you'll need to configure your OpenRouter API key.
-            This allows you to chat with various AI models.
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <motion.button
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              onClick={() => setShowSettings(true)}
-              className="btn-primary w-full flex items-center justify-center gap-2"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Sparkles size={18} />
-              Configure API Key
-            </motion.button>
-          </motion.div>
-        </motion.div>
-
-        <SettingsModal
-          isOpen={showSettings}
-          onClose={() => setShowSettings(false)}
-        />
-      </div>
-    );
-  }
+  // API key is now handled server-side, users can chat directly
 
   return (
     <motion.div

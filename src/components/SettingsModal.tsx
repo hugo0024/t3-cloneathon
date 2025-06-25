@@ -1,17 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useChat } from '@/contexts/ChatContext';
 import {
   X,
   Key,
-  Save,
-  Loader2,
-  ExternalLink,
-  Shield,
-  Eye,
-  EyeOff,
+  Sparkles,
 } from 'lucide-react';
 
 interface SettingsModalProps {
@@ -20,53 +15,11 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
-  const { profile, refreshProfile } = useChat();
-  const [apiKey, setApiKey] = useState('');
+  const { profile } = useChat();
   const [isLoading, setIsLoading] = useState(false);
-  const [showApiKey, setShowApiKey] = useState(false);
 
-  useEffect(() => {
-    if (profile?.openrouter_api_key) {
-      setApiKey(profile.openrouter_api_key);
-    }
-  }, [profile]);
-
-  const handleSave = async () => {
-    if (!apiKey.trim()) {
-      alert('Please enter your OpenRouter API key');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const response = await fetch('/api/profile', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          openrouter_api_key: apiKey.trim(),
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save API key');
-      }
-
-      await refreshProfile();
-      onClose();
-    } catch (error) {
-      console.error('Error saving API key:', error);
-      alert(error instanceof Error ? error.message : 'Failed to save API key');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const maskApiKey = (key: string) => {
-    if (!key || key.length < 8) return key;
-    return key.slice(0, 4) + '•'.repeat(key.length - 8) + key.slice(-4);
+  const handleClose = () => {
+    onClose();
   };
 
   return (
@@ -121,38 +74,21 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               transition={{ delay: 0.2 }}
               className="space-y-6 relative z-10"
             >
-              <div>
-                <label className="block text-sm font-medium text-white/80 mb-3">
-                  OpenRouter API Key
-                </label>
-                <div className="relative">
-                  <input
-                    type={showApiKey ? 'text' : 'password'}
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    placeholder="Enter your OpenRouter API key"
-                    className="w-full input-glass pr-12 text-white placeholder-white/40"
-                  />
-                  <motion.button
-                    type="button"
-                    onClick={() => setShowApiKey(!showApiKey)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-white/40 hover:text-white/80 transition-colors"
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                  >
-                    {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </motion.button>
-                </div>
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                  className="text-xs text-white/50 mt-2 flex items-center gap-2"
+              <div className="text-center">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="w-16 h-16 mx-auto mb-4 glass rounded-2xl flex items-center justify-center"
                 >
-                  <Shield size={12} />
-                  Your API key is stored securely and only used for OpenRouter
-                  requests.
-                </motion.p>
+                  <Sparkles size={24} className="text-blue-400" />
+                </motion.div>
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  API Configuration Complete
+                </h3>
+                <p className="text-white/60 text-sm leading-relaxed">
+                  The OpenRouter API is already configured on the server. You can start chatting with AI models right away!
+                </p>
               </div>
 
               <motion.div
@@ -168,23 +104,12 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   </div>
                   <div>
                     <h3 className="font-semibold text-white mb-2">
-                      Get your OpenRouter API Key
+                      Server-Side Configuration
                     </h3>
                     <p className="text-sm text-white/70 mb-4 leading-relaxed">
-                      You need an OpenRouter API key to use this chat
-                      application. OpenRouter provides access to various AI
-                      models through a unified API.
+                      The OpenRouter API key is securely configured on the server, 
+                      so you don't need to provide your own. Just start chatting!
                     </p>
-                    <motion.a
-                      href="https://openrouter.ai/keys"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-sm bg-blue-500/20 text-blue-300 hover:text-blue-200 px-3 py-2 rounded-xl border border-blue-400/30 hover:border-blue-400/50 transition-all"
-                      whileHover={{ scale: 1.02, x: 2 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      Get API Key <ExternalLink size={14} />
-                    </motion.a>
                   </div>
                 </div>
               </motion.div>
@@ -207,16 +132,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-white/60">API Key:</span>
-                      {profile.openrouter_api_key ? (
-                        <span className="font-mono text-green-400">
-                          {showApiKey
-                            ? profile.openrouter_api_key
-                            : maskApiKey(profile.openrouter_api_key)}
-                        </span>
-                      ) : (
-                        <span className="text-red-400">Not configured</span>
-                      )}
+                      <span className="text-white/60">API Status:</span>
+                      <span className="font-mono text-green-400">
+                        Configured (Server-side)
+                      </span>
                     </div>
                   </div>
                 </motion.div>
@@ -230,47 +149,13 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               className="flex justify-end gap-3 mt-8 relative z-10"
             >
               <motion.button
-                onClick={onClose}
+                onClick={handleClose}
                 className="btn-ghost px-6 py-3"
                 disabled={isLoading}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                Cancel
-              </motion.button>
-
-              <motion.button
-                onClick={handleSave}
-                disabled={isLoading || !apiKey.trim()}
-                className="btn-primary px-6 py-3 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <AnimatePresence mode="wait">
-                  {isLoading ? (
-                    <motion.div
-                      key="loading"
-                      initial={{ opacity: 0, rotate: -90 }}
-                      animate={{ opacity: 1, rotate: 0 }}
-                      exit={{ opacity: 0, rotate: 90 }}
-                      className="flex items-center gap-2"
-                    >
-                      <Loader2 size={16} className="animate-spin" />
-                      Saving...
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="save"
-                      initial={{ opacity: 0, rotate: -90 }}
-                      animate={{ opacity: 1, rotate: 0 }}
-                      exit={{ opacity: 0, rotate: 90 }}
-                      className="flex items-center gap-2"
-                    >
-                      <Save size={16} />
-                      Save
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                Close
               </motion.button>
             </motion.div>
           </motion.div>
