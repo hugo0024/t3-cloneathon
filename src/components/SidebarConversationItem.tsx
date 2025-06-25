@@ -3,6 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Users, Edit3, Trash2, Check, X } from 'lucide-react';
+import { animationConfig, motionConfig, isFirefox } from '../lib/animation-config';
 
 interface ConversationItemProps {
   conversation: {
@@ -59,14 +60,13 @@ export function SidebarConversationItem({
   return (
     <motion.div
       key={conversation.id}
-      layout
-      initial={{ opacity: 0, y: 20, x: -20 }}
-      animate={{ opacity: 1, y: 0, x: 0 }}
-      exit={{ opacity: 0, x: -20, scale: 0.9 }}
+      initial={animationConfig.getInitial(false)}
+      animate={animationConfig.getAnimate()}
+      exit={animationConfig.getExit()}
       transition={{
-        delay: 0.5 + index * 0.05,
-        duration: 0.3,
-        ease: 'easeOut',
+        delay: animationConfig.getStaggerDelay(index),
+        duration: animationConfig.duration.normal,
+        ease: animationConfig.ease,
       }}
       onClick={onConversationClick}
       className={`group p-2 rounded-md transition-colors relative ${
@@ -80,8 +80,8 @@ export function SidebarConversationItem({
           ? 'bg-white/10 text-white/90'
           : 'text-white/60 hover:bg-white/5 hover:text-white/80'
       }`}
-      whileHover={{ scale: 1.02, x: 4 }}
-      whileTap={{ scale: 0.98 }}
+      whileHover={motionConfig.whileHover}
+      whileTap={motionConfig.whileTap}
     >
       {isActive && (
         <motion.div
@@ -161,7 +161,11 @@ export function SidebarConversationItem({
           >
             <motion.div
               animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+              transition={{ 
+                duration: isFirefox ? 1.5 : 1, 
+                repeat: Infinity, 
+                ease: 'linear' 
+              }}
               className="w-3 h-3 border border-red-400/60 border-t-transparent rounded-full"
             />
             <span className="text-[10px] text-red-400/80 font-medium">

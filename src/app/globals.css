@@ -39,6 +39,58 @@ body {
   overflow-x: hidden;
 }
 
+/* Firefox-specific optimizations */
+@-moz-document url-prefix() {
+  * {
+    /* Disable hardware acceleration for problematic elements in Firefox */
+    will-change: auto;
+  }
+  
+  .glass, .glass-strong {
+    /* Reduce blur intensity for Firefox */
+    backdrop-filter: blur(8px);
+  }
+  
+  .animated-bg {
+    /* Reduce animation complexity in Firefox */
+    animation-duration: 30s;
+  }
+  
+  /* Simplified CSS animations for Firefox fallbacks */
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slide-up {
+    from { 
+      opacity: 0; 
+      transform: translateY(10px); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0); 
+    }
+  }
+  
+  @keyframes pulse-slow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+  
+  .animate-fade-in {
+    animation: fade-in 0.2s ease-out;
+  }
+  
+  .animate-slide-up {
+    animation: slide-up 0.3s ease-out;
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse-slow 2s infinite;
+  }
+}
+
 /* Responsive Layout Utilities */
 @media (max-width: 768px) {
   .sidebar-responsive {
@@ -216,9 +268,16 @@ body {
   background: rgba(255, 255, 255, 0.2);
 }
 
-/* Smooth Animations */
-* {
+/* Smooth Animations - Limited scope for better performance */
+button, a, .btn-primary, .btn-ghost, .input-glass, .glass-hover {
   transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Firefox-specific: Reduce transition scope even further */
+@-moz-document url-prefix() {
+  button, a {
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
+  }
 }
 
 /* Grid Layout Utilities */

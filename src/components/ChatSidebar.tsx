@@ -156,10 +156,10 @@ export function ChatSidebar({
       <AnimatePresence>
         {!isCollapsed && (
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
             className="bg-black/20 backdrop-blur-sm border-r border-white/5 flex flex-col h-full overflow-hidden w-full"
           >
             {isLoading ? (
