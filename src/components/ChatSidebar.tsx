@@ -11,6 +11,7 @@ import {
   Trash2,
   Settings,
   ChevronLeft,
+  LogIn,
 } from 'lucide-react';
 import { SidebarConversationItem } from './SidebarConversationItem';
 import { CollapsedSidebar } from './CollapsedSidebar';
@@ -32,6 +33,7 @@ export function ChatSidebar({
     deleteConversation,
     renameConversation,
     isLoading,
+    user,
   } = useChat();
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -306,19 +308,35 @@ export function ChatSidebar({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
                 >
-                  <Link href="/settings">
-                    <motion.div
-                      className="w-full flex items-center gap-2 text-white/50 hover:text-white/80 px-2 py-2 rounded-md hover:bg-white/5 transition-colors text-xs"
-                      whileHover={{ scale: 1.02, x: 4 }}
-                      whileTap={{ scale: 0.98 }}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.6 }}
-                    >
-                      <Settings size={14} />
-                      Settings
-                    </motion.div>
-                  </Link>
+                  {user ? (
+                    <Link href="/settings">
+                      <motion.div
+                        className="w-full flex items-center gap-2 text-white/50 hover:text-white/80 px-2 py-2 rounded-md hover:bg-white/5 transition-colors text-xs"
+                        whileHover={{ scale: 1.02, x: 4 }}
+                        whileTap={{ scale: 0.98 }}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.6 }}
+                      >
+                        <Settings size={14} />
+                        Settings
+                      </motion.div>
+                    </Link>
+                  ) : (
+                    <Link href="/login">
+                      <motion.div
+                        className="w-full flex items-center gap-2 text-white/50 hover:text-white/80 px-2 py-2 rounded-md hover:bg-white/5 transition-colors text-xs"
+                        whileHover={{ scale: 1.02, x: 4 }}
+                        whileTap={{ scale: 0.98 }}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.6 }}
+                      >
+                        <LogIn size={14} />
+                        Login / Signup
+                      </motion.div>
+                    </Link>
+                  )}
                 </motion.div>
               </>
             )}

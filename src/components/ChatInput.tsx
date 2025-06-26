@@ -30,6 +30,7 @@ export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
     updateStreamingMessage,
     finalizeMessage,
     removeOptimisticMessage,
+    user,
   } = useChat();
 
   const [message, setMessage] = useState('');
@@ -165,6 +166,12 @@ export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if ((!message.trim() && attachments.length === 0) || isLoading) return;
+
+    // Check if user is authenticated
+    if (!user) {
+      alert('Please log in to send messages.');
+      return;
+    }
 
     const userMessage = message;
     const messageAttachments = [...attachments];
@@ -373,6 +380,12 @@ export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
       selectedModels.length === 0
     )
       return;
+
+    // Check if user is authenticated
+    if (!user) {
+      alert('Please log in to send messages.');
+      return;
+    }
 
     const userMessage = message;
     const messageAttachments = [...attachments];
@@ -740,14 +753,18 @@ export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
                 ref={textareaRef}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Type your message..."
-                disabled={isLoading}
+                placeholder={!user ? "Please log in to send messages..." : "Type your message..."}
+                disabled={isLoading || !user}
                 className="w-full min-h-[40px] max-h-32 resize-none bg-transparent border-none outline-none focus:outline-none disabled:opacity-50 pr-20 text-white placeholder-white/60 p-3 overflow-y-auto scrollbar-thin"
                 rows={1}
                 style={{ scrollbarWidth: 'thin' }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
+                    if (!user) {
+                      alert('Please log in to send messages.');
+                      return;
+                    }
                     if (isConsensusMode) {
                       handleConsensusSubmit(e);
                     } else {
@@ -760,7 +777,7 @@ export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
               <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1 z-10">
                 <FileUploadButton
                   selectedModel={selectedModel}
-                  isLoading={isLoading}
+                  isLoading={isLoading || !user}
                   isUploading={isUploading}
                   fileInputRef={fileInputRef}
                   onFileSelect={handleFileSelect}
@@ -771,6 +788,7 @@ export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
                   isDisabled={
                     (!message.trim() && attachments.length === 0) ||
                     isLoading ||
+                    !user ||
                     (isConsensusMode && selectedModels.length === 0)
                   }
                 />
@@ -808,6 +826,19 @@ export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
               onSingleModelSelectorOpen={() => setIsModelModalOpen(true)}
               formatModelName={formatModelName}
             />
+
+            {!user && (
+              <div className="flex items-center gap-2 text-white/60 text-sm">
+                <span>Please</span>
+                <button
+                  onClick={() => window.location.href = '/login'}
+                  className="text-blue-400 hover:text-blue-300 underline"
+                >
+                  log in
+                </button>
+                <span>to send messages</span>
+              </div>
+            )}
           </div>
         </div>
       </div>

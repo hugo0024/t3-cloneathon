@@ -426,11 +426,21 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const initializeData = async () => {
       setIsLoading(true);
-      await Promise.all([
-        refreshConversations(),
-        refreshProfile(),
-        refreshUser(),
-      ]);
+      
+      // First, check if user is authenticated
+      await refreshUser();
+      
+      // Only fetch conversations and profile if user is authenticated
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        await Promise.all([
+          refreshConversations(),
+          refreshProfile(),
+        ]);
+      }
+      
       setIsLoading(false);
     };
 

@@ -37,6 +37,7 @@ export async function middleware(request: NextRequest) {
   const publicRoutes = [
     '/',
     '/login',
+    '/chat',
     '/auth/callback',
     '/auth/auth-code-error',
     '/nutzungsbedingungen',
@@ -62,11 +63,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (
-    user &&
-    (request.nextUrl.pathname.startsWith('/login') ||
-      request.nextUrl.pathname === '/')
-  ) {
+  // Redirect all users from home page to chat
+  if (request.nextUrl.pathname === '/') {
+    const url = request.nextUrl.clone();
+    url.pathname = '/chat';
+    return NextResponse.redirect(url);
+  }
+
+  // Redirect authenticated users from login page to chat
+  if (user && request.nextUrl.pathname.startsWith('/login')) {
     const url = request.nextUrl.clone();
     url.pathname = '/chat';
     return NextResponse.redirect(url);
