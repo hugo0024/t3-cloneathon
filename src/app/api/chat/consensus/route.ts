@@ -472,7 +472,7 @@ export async function POST(request: NextRequest) {
             encoder.encode(
               `data: ${JSON.stringify({
                 type: 'consensus_final',
-                messageId: assistantMessage?.id,
+                message: assistantMessage,
                 responses: consensusResponses,
               })}\n\n`
             )

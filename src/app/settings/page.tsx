@@ -80,7 +80,7 @@ function SettingsSidebar({
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: -50, scale: 0.8 }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="fixed left-4 top-4 z-50 lg:hidden"
+            className="fixed left-4 top-4 z-50"
           >
             <motion.button
               onClick={onToggleCollapse}

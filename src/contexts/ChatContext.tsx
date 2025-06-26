@@ -33,7 +33,11 @@ interface ChatContextType {
   addNewConversation: (conversation: Conversation) => void;
   addOptimisticMessage: (message: Omit<Message, 'id' | 'created_at'>) => string;
   updateStreamingMessage: (messageId: string, content: string) => void;
-  finalizeMessage: (messageId: string, finalContent: string) => void;
+  finalizeMessage: (
+    messageId: string,
+    finalContent: string,
+    serverMessage?: Message
+  ) => void;
   removeOptimisticMessage: (messageId: string) => void;
 }
 
@@ -277,22 +281,37 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
-  const finalizeMessage = (messageId: string, finalContent: string) => {
+  const finalizeMessage = (
+    messageId: string,
+    finalContent: string,
+    serverMessage?: Message
+  ) => {
     setMessages((prev) => {
       const messageToFinalize = prev.find((msg) => msg.id === messageId);
       const conversationId = messageToFinalize?.conversation_id;
 
-      const updatedMessages = prev.map((msg) =>
-        msg.id === messageId
-          ? {
-              ...msg,
-              content: finalContent,
+      let updatedMessages = prev.map((msg) => {
+        if (msg.id === messageId) {
+          // If we have the final message from the server, use it
+          if (serverMessage) {
+            return {
+              ...serverMessage,
               isOptimistic: false,
               isStreaming: false,
               isLoading: false,
-            }
-          : msg
-      );
+            };
+          }
+          // Otherwise, update the optimistic message
+          return {
+            ...msg,
+            content: finalContent,
+            isOptimistic: false,
+            isStreaming: false,
+            isLoading: false,
+          };
+        }
+        return msg;
+      });
 
       // Schedule a server refresh after all optimistic operations are complete
       if (conversationId && messageToFinalize?.isOptimistic) {
@@ -300,6 +319,18 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         const existingTimeout = refreshTimeouts.current.get(conversationId);
         if (existingTimeout) {
           clearTimeout(existingTimeout);
+        }
+
+        // If we received a server message, it means we are in a new conversation
+        // and have already updated the message with the permanent one.
+        // We can skip the full refresh.
+        if (serverMessage) {
+          setNewConversationIds((prev) => {
+            const newSet = new Set(prev);
+            newSet.delete(conversationId);
+            return newSet;
+          });
+          return updatedMessages;
         }
 
         // Check if this was the last active optimistic message for this conversation

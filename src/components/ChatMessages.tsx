@@ -29,6 +29,9 @@ export function ChatMessages({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [retryingId, setRetryingId] = useState<string | null>(null);
   const [hasShownMessages, setHasShownMessages] = useState(false);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const [lastMessageCount, setLastMessageCount] = useState(0);
+  const [isNearBottom, setIsNearBottom] = useState(true);
 
   // Track if we've shown messages for this conversation to prevent flickering
   useEffect(() => {
@@ -38,6 +41,33 @@ export function ChatMessages({
       setHasShownMessages(false);
     }
   }, [conversationMessages.length, activeConversation]);
+
+  // Check if user is near bottom of scroll container
+  const checkIfNearBottom = () => {
+    if (!scrollContainerRef.current) return true;
+    
+    const container = scrollContainerRef.current;
+    const threshold = 100; // pixels from bottom
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    
+    return distanceFromBottom <= threshold;
+  };
+
+  // Handle scroll events to determine if user scrolled away from bottom
+  const handleScroll = () => {
+    const nearBottom = checkIfNearBottom();
+    setIsNearBottom(nearBottom);
+    setShouldAutoScroll(nearBottom);
+  };
+
+  // Set up scroll listener
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Safety mechanism: if we have an active conversation but no messages after loading
   // and no optimistic messages are being processed, try refreshing
@@ -82,11 +112,44 @@ export function ChatMessages({
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Re-enable auto-scrolling when user manually scrolls to bottom
+    setShouldAutoScroll(true);
+    setIsNearBottom(true);
   };
 
+  // Smart auto-scrolling: only scroll when new messages are added and user is near bottom
   useEffect(() => {
-    scrollToBottom();
-  }, [conversationMessages]);
+    const currentMessageCount = conversationMessages.length;
+    
+    // Check if this is a new message (count increased) or if we should auto-scroll
+    const isNewMessage = currentMessageCount > lastMessageCount;
+    const hasStreamingMessage = conversationMessages.some(msg => msg.isStreaming);
+    
+    // Auto-scroll in these cases:
+    // 1. New message added and user is near bottom
+    // 2. First message in a new conversation
+    // 3. User explicitly wants to stay at bottom (shouldAutoScroll = true)
+    if ((isNewMessage && isNearBottom) || 
+        (currentMessageCount === 1 && lastMessageCount === 0) ||
+        (shouldAutoScroll && !hasStreamingMessage)) {
+      
+      // Small delay to ensure DOM is updated
+      setTimeout(() => {
+        if (messagesEndRef.current && shouldAutoScroll) {
+          messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 50);
+    }
+    
+    setLastMessageCount(currentMessageCount);
+  }, [conversationMessages.length, isNearBottom, shouldAutoScroll]);
+
+  // Reset auto-scroll when switching conversations
+  useEffect(() => {
+    setShouldAutoScroll(true);
+    setIsNearBottom(true);
+    setLastMessageCount(0);
+  }, [activeConversation?.id]);
 
   const handleCopy = async (messageId: string, content: string) => {
     try {

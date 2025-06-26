@@ -400,7 +400,7 @@ export async function POST(request: NextRequest) {
 
           controller.enqueue(
             encoder.encode(
-              `data: ${JSON.stringify({ done: true, conversationId: conversation.id })}\n\n`
+              `data: ${JSON.stringify({ done: true, message: savedMessage })}\n\n`
             )
           );
           controller.close();

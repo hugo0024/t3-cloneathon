@@ -293,7 +293,11 @@ export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
               } else if (parsed.done && assistantMessageId) {
                 // Ensure we have content before finalizing
                 const finalContent = assistantContent || parsed.content || '';
-                finalizeMessage(assistantMessageId, finalContent);
+                finalizeMessage(
+                  assistantMessageId,
+                  finalContent,
+                  parsed.message
+                );
               }
             } catch (e) {
               console.error('Error parsing streaming data:', e, 'Data:', data);
@@ -559,7 +563,8 @@ export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
               ) {
                 finalizeMessage(
                   assistantMessageId,
-                  JSON.stringify(parsed.responses)
+                  JSON.stringify(parsed.responses),
+                  parsed.message
                 );
               }
             } catch (e) {
