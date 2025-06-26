@@ -25,21 +25,16 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
   const [showSettings, setShowSettings] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [quickActionPrompt, setQuickActionPrompt] = useState<string>('');
+  const [hasInitialized, setHasInitialized] = useState(false);
 
-  // Auto-collapse sidebar on small screens
+  // Set initial sidebar state based on screen size, but allow manual expansion
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 768 && !isSidebarCollapsed) {
-        setIsSidebarCollapsed(true);
-      }
-    };
-
-    // Check on mount
-    handleResize();
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [isSidebarCollapsed]);
+    if (!hasInitialized) {
+      const isMobile = window.innerWidth < 768;
+      setIsSidebarCollapsed(isMobile);
+      setHasInitialized(true);
+    }
+  }, [hasInitialized]);
 
   // Handle quick action selection
   const handleQuickAction = (prompt: string) => {
@@ -121,11 +116,9 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         className={`shrink-0 transition-all duration-300 ${
           isSidebarCollapsed 
-            ? 'w-0 md:w-0' 
+            ? 'w-0' 
             : 'w-80 md:w-64 lg:w-72 xl:w-80'
-        } max-w-[85vw] md:max-w-none ${
-          !isSidebarCollapsed ? 'md:relative fixed z-40' : ''
-        }`}
+        } max-w-[85vw] md:max-w-none fixed md:relative z-40 md:z-auto h-full md:h-auto inset-y-0 md:inset-y-auto left-0 md:left-auto`}
       >
         <ChatSidebar
           isCollapsed={isSidebarCollapsed}
