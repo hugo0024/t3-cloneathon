@@ -152,15 +152,30 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
                 (msg.isStreaming || msg.isLoading)
             );
 
-            // If we have active optimistic messages and this isn't a forced refresh, preserve them
-            if (activeOptimisticMessages.length > 0 && !force) {
-              return prev; // Don't update, keep optimistic messages
+            // NEVER clear messages if there are active streaming/loading messages
+            if (activeOptimisticMessages.length > 0) {
+              // Instead of replacing, merge server messages with optimistic ones
+              const nonOptimisticFromServer = serverMessages.filter(
+                (serverMsg: any) => !prev.some(opt => opt.isOptimistic && opt.conversation_id === conversationId)
+              );
+              
+              // Keep all optimistic messages and add any new server messages
+              const existingNonOptimistic = prev.filter(
+                (msg) => msg.conversation_id !== conversationId || msg.isOptimistic
+              );
+              
+              return [
+                ...prev.filter((msg) => msg.conversation_id !== conversationId),
+                ...nonOptimisticFromServer,
+                ...activeOptimisticMessages,
+              ];
             }
 
             // Only update if the server messages are actually different
             const existingMessages = prev.filter(
-              (msg) => msg.conversation_id === conversationId
+              (msg) => msg.conversation_id === conversationId && !msg.isOptimistic
             );
+            
             const hasChanges =
               serverMessages.length !== existingMessages.length ||
               serverMessages.some((serverMsg: any, index: number) => {
@@ -176,7 +191,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
               return prev; // No changes, don't update
             }
 
-            // Safe to replace with server messages
+            // Safe to replace with server messages only if no active streaming
             return [
               ...prev.filter((msg) => msg.conversation_id !== conversationId),
               ...serverMessages,
@@ -281,6 +296,22 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
+  // Enhanced setMessages with streaming protection
+  const setMessagesWithStreamingProtection = (updater: (prev: Message[]) => Message[]) => {
+    setMessages((prev) => {
+      const updated = updater(prev);
+      
+      // Safeguard: never clear all messages if there are active streaming operations anywhere
+      const hasActiveStreaming = prev.some(msg => msg.isStreaming || msg.isLoading);
+      if (hasActiveStreaming && updated.length === 0) {
+        console.warn('Prevented clearing all messages during active streaming');
+        return prev; // Preserve existing messages
+      }
+      
+      return updated;
+    });
+  };
+
   const finalizeMessage = (
     messageId: string,
     finalContent: string,
@@ -340,6 +371,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
             msg.conversation_id === conversationId &&
             (msg.isStreaming || msg.isLoading)
         );
+        
         // Only schedule a refresh if this was actually the last optimistic message
         // and we're not in a new conversation
         if (remainingActiveOptimistic.length === 0) {
@@ -350,13 +382,27 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
             return newSet;
           });
 
-          // Only schedule refresh for conversations that might need server sync
-          // Skip if we just finalized a user message (no need to refresh for user messages)
-          if (messageToFinalize.role === 'assistant') {
+          // Only schedule refresh for assistant messages and only if needed
+          // Use a gentler refresh (without force) and with a longer delay
+          if (messageToFinalize.role === 'assistant' && !serverMessage) {
             const timeout = setTimeout(() => {
-              refreshMessages(conversationId, true);
+              // Check again if we still need a refresh before doing it
+              setMessages((currentMessages) => {
+                const stillHasActiveOptimistic = currentMessages.some(
+                  msg => msg.isOptimistic && 
+                  msg.conversation_id === conversationId &&
+                  (msg.isStreaming || msg.isLoading)
+                );
+                
+                // Only refresh if no active streaming messages
+                if (!stillHasActiveOptimistic) {
+                  refreshMessages(conversationId, false); // Use gentle refresh, not force
+                }
+                return currentMessages;
+              });
+              
               refreshTimeouts.current.delete(conversationId);
-            }, 1000); // Reduced back to 1 second since we're more selective
+            }, 2000); // Increased delay to reduce disruption
 
             refreshTimeouts.current.set(conversationId, timeout);
           }

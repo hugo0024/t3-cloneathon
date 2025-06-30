@@ -167,12 +167,6 @@ export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
     e.preventDefault();
     if ((!message.trim() && attachments.length === 0) || isLoading) return;
 
-    // Check if user is authenticated
-    if (!user) {
-      alert('Please log in to send messages.');
-      return;
-    }
-
     const userMessage = message;
     const messageAttachments = [...attachments];
     setMessage('');
@@ -230,6 +224,7 @@ export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
         attachments: messageAttachments,
       });
 
+      // Add assistant message with loading state
       assistantMessageId = addOptimisticMessage({
         conversation_id: conversationId!,
         role: 'assistant',
@@ -251,14 +246,10 @@ export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
       });
 
       if (!response.ok) {
-        if (userMessageId) removeOptimisticMessage(userMessageId);
-        if (assistantMessageId) removeOptimisticMessage(assistantMessageId);
-        throw new Error('Failed to send message');
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       if (!response.body) {
-        if (userMessageId) removeOptimisticMessage(userMessageId);
-        if (assistantMessageId) removeOptimisticMessage(assistantMessageId);
         throw new Error('No response body');
       }
 
@@ -267,50 +258,57 @@ export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
       let assistantContent = '';
       let hasStartedStreaming = false;
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
 
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') continue;
 
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed.chunk && assistantMessageId) {
-                assistantContent += parsed.chunk;
-                hasStartedStreaming = true;
-                updateStreamingMessage(assistantMessageId, assistantContent);
-              } else if (parsed.error && assistantMessageId) {
-                // Handle error from API - show error message in chat
-                const errorContent =
-                  parsed.errorContent || `❌ **Error**: ${parsed.error}`;
-                finalizeMessage(assistantMessageId, errorContent);
-              } else if (
-                parsed.titleUpdate &&
-                parsed.conversationId &&
-                parsed.title
-              ) {
-                // Handle title update - update conversation title without switching chats
-                updateConversationTitle(parsed.conversationId, parsed.title);
-              } else if (parsed.done && assistantMessageId) {
-                // Ensure we have content before finalizing
-                const finalContent = assistantContent || parsed.content || '';
-                finalizeMessage(
-                  assistantMessageId,
-                  finalContent,
-                  parsed.message
-                );
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.chunk && assistantMessageId) {
+                  assistantContent += parsed.chunk;
+                  hasStartedStreaming = true;
+                  updateStreamingMessage(assistantMessageId, assistantContent);
+                } else if (parsed.error && assistantMessageId) {
+                  // Handle error from API - show error message in chat
+                  const errorContent =
+                    parsed.errorContent || `❌ **Error**: ${parsed.error}`;
+                  finalizeMessage(assistantMessageId, errorContent);
+                  hasStartedStreaming = true; // Prevent fallback finalization
+                } else if (
+                  parsed.titleUpdate &&
+                  parsed.conversationId &&
+                  parsed.title
+                ) {
+                  // Handle title update - update conversation title without switching chats
+                  updateConversationTitle(parsed.conversationId, parsed.title);
+                } else if (parsed.done && assistantMessageId) {
+                  // Ensure we have content before finalizing
+                  const finalContent = assistantContent || parsed.content || '';
+                  finalizeMessage(
+                    assistantMessageId,
+                    finalContent,
+                    parsed.message
+                  );
+                  hasStartedStreaming = true; // Mark as handled
+                }
+              } catch (e) {
+                console.error('Error parsing streaming data:', e, 'Data:', data);
               }
-            } catch (e) {
-              console.error('Error parsing streaming data:', e, 'Data:', data);
             }
           }
         }
+      } finally {
+        // Ensure reader is always closed
+        reader.releaseLock();
       }
 
       // Fallback: if streaming never started and we have an assistant message, finalize it
@@ -323,40 +321,26 @@ export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
     } catch (error) {
       console.error('Error sending message:', error);
 
-      // Show error message in chat if we have an assistant message to update
-      if (assistantMessageId) {
-        let errorMessage = 'An unexpected error occurred';
-        if (error instanceof Error) {
-          errorMessage = error.message;
-        }
+      // Clean up optimistic messages on error
+      if (userMessageId) removeOptimisticMessage(userMessageId);
+      if (assistantMessageId) removeOptimisticMessage(assistantMessageId);
 
-        finalizeMessage(assistantMessageId, `❌ **Error**: ${errorMessage}`);
+      let errorMessage = 'An unexpected error occurred';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
 
-        // Try to save error to database for new conversations
-        if (conversationId && isNewConversation) {
-          try {
-            await fetch(`/api/conversations/${conversationId}/messages`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                role: 'assistant',
-                content: `❌ **Error**: ${errorMessage}`,
-              }),
-            });
-          } catch (dbError) {
-            console.error('Failed to save error message to database:', dbError);
-          }
-        }
+      // Show error as a new message instead of replacing optimistic ones
+      if (conversationId) {
+        const errorMessageId = addOptimisticMessage({
+          conversation_id: conversationId,
+          role: 'assistant',
+          content: `❌ **Error**: ${errorMessage}`,
+        });
+        
+        // Finalize the error message immediately
+        finalizeMessage(errorMessageId, `❌ **Error**: ${errorMessage}`);
       } else {
-        // If no assistant message, remove user message and show alert
-        if (userMessageId) {
-          removeOptimisticMessage(userMessageId);
-        }
-
-        let errorMessage = 'Failed to send message';
-        if (error instanceof Error) {
-          errorMessage = error.message;
-        }
         alert(`Error: ${errorMessage}`);
       }
     } finally {
@@ -380,12 +364,6 @@ export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
       selectedModels.length === 0
     )
       return;
-
-    // Check if user is authenticated
-    if (!user) {
-      alert('Please log in to send messages.');
-      return;
-    }
 
     const userMessage = message;
     const messageAttachments = [...attachments];
@@ -753,18 +731,14 @@ export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
                 ref={textareaRef}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder={!user ? "Please log in to send messages..." : "Type your message..."}
-                disabled={isLoading || !user}
+                placeholder="Type your message..."
+                disabled={isLoading}
                 className="w-full min-h-[40px] max-h-32 resize-none bg-transparent border-none outline-none focus:outline-none disabled:opacity-50 pr-20 text-white placeholder-white/60 p-3 overflow-y-auto scrollbar-thin"
                 rows={1}
                 style={{ scrollbarWidth: 'thin' }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
-                    if (!user) {
-                      alert('Please log in to send messages.');
-                      return;
-                    }
                     if (isConsensusMode) {
                       handleConsensusSubmit(e);
                     } else {
@@ -777,7 +751,7 @@ export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
               <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-1 z-10">
                 <FileUploadButton
                   selectedModel={selectedModel}
-                  isLoading={isLoading || !user}
+                  isLoading={isLoading}
                   isUploading={isUploading}
                   fileInputRef={fileInputRef}
                   onFileSelect={handleFileSelect}
@@ -788,7 +762,6 @@ export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
                   isDisabled={
                     (!message.trim() && attachments.length === 0) ||
                     isLoading ||
-                    !user ||
                     (isConsensusMode && selectedModels.length === 0)
                   }
                 />
@@ -827,18 +800,7 @@ export function ChatInput({ quickActionPrompt }: ChatInputProps = {}) {
               formatModelName={formatModelName}
             />
 
-            {!user && (
-              <div className="flex items-center gap-2 text-white/60 text-sm">
-                <span>Please</span>
-                <button
-                  onClick={() => window.location.href = '/login'}
-                  className="text-blue-400 hover:text-blue-300 underline"
-                >
-                  log in
-                </button>
-                <span>to send messages</span>
-              </div>
-            )}
+
           </div>
         </div>
       </div>

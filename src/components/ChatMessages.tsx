@@ -19,9 +19,26 @@ export function ChatMessages({
     useChat();
 
   // Filter messages to only show those for the active conversation
+  // But preserve streaming messages to prevent blanking
   const conversationMessages = messages.filter(
-    (message) =>
-      !activeConversation || message.conversation_id === activeConversation.id
+    (message) => {
+      if (!activeConversation) {
+        // Show no messages when no conversation is active
+        return false;
+      }
+      
+      // Always show messages for the active conversation
+      if (message.conversation_id === activeConversation.id) {
+        return true;
+      }
+      
+      // Also show streaming/loading messages to prevent blanking during transitions
+      if (message.isStreaming || message.isLoading) {
+        return true;
+      }
+      
+      return false;
+    }
   );
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -32,11 +49,29 @@ export function ChatMessages({
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const [lastMessageCount, setLastMessageCount] = useState(0);
   const [isNearBottom, setIsNearBottom] = useState(true);
+  const [lastActiveConversationId, setLastActiveConversationId] = useState<string | null>(null);
+
+  // Track conversation changes to maintain continuity
+  useEffect(() => {
+    if (activeConversation?.id !== lastActiveConversationId) {
+      setLastActiveConversationId(activeConversation?.id || null);
+      // Reset shown messages state when conversation changes
+      if (!activeConversation) {
+        setHasShownMessages(false);
+      }
+    }
+  }, [activeConversation?.id, lastActiveConversationId]);
 
   // Track if we've shown messages for this conversation to prevent flickering
   useEffect(() => {
-    if (conversationMessages.length > 0) {
-      setHasShownMessages(true);
+    if (conversationMessages.length > 0 && activeConversation) {
+      // Only set hasShownMessages if we have messages for the active conversation
+      const hasMessagesForActiveConversation = conversationMessages.some(
+        msg => msg.conversation_id === activeConversation.id
+      );
+      if (hasMessagesForActiveConversation) {
+        setHasShownMessages(true);
+      }
     } else if (!activeConversation) {
       setHasShownMessages(false);
     }
@@ -78,26 +113,38 @@ export function ChatMessages({
       conversationMessages.length === 0 &&
       hasShownMessages === false
     ) {
+      // Check for any active optimistic or streaming messages globally
       const hasActiveOptimistic = messages.some(
         (msg) =>
           msg.conversation_id === activeConversation.id &&
-          msg.isOptimistic &&
-          (msg.isLoading || msg.isStreaming)
+          (msg.isOptimistic || msg.isStreaming || msg.isLoading)
       );
 
-      if (!hasActiveOptimistic) {
+      // Also check if we're currently in a streaming state for any conversation
+      const hasGlobalStreaming = messages.some(
+        (msg) => msg.isStreaming || msg.isLoading
+      );
+
+      if (!hasActiveOptimistic && !hasGlobalStreaming) {
         // Wait longer to ensure any optimistic operations have settled
-        // and only refresh once
+        // and only refresh once - increased timeout for better stability
         const timeoutId = setTimeout(() => {
-          // Double-check conditions haven't changed
+          // Triple-check conditions haven't changed before refreshing
           if (
             activeConversation &&
             conversationMessages.length === 0 &&
             !hasShownMessages
           ) {
-            refreshMessages(activeConversation.id);
+            // One final check for streaming messages before refresh
+            const finalStreamingCheck = messages.some(
+              (msg) => msg.isStreaming || msg.isLoading
+            );
+            
+            if (!finalStreamingCheck) {
+              refreshMessages(activeConversation.id);
+            }
           }
-        }, 2000); // Increased from 1 second to 2 seconds
+        }, 3000); // Increased from 2 seconds to 3 seconds for more stability
 
         return () => clearTimeout(timeoutId);
       }
@@ -108,6 +155,7 @@ export function ChatMessages({
     conversationMessages.length,
     hasShownMessages,
     refreshMessages,
+    messages, // Include messages in dependency to track streaming state
   ]);
 
   const scrollToBottom = () => {
@@ -124,31 +172,41 @@ export function ChatMessages({
     // Check if this is a new message (count increased) or if we should auto-scroll
     const isNewMessage = currentMessageCount > lastMessageCount;
     const hasStreamingMessage = conversationMessages.some(msg => msg.isStreaming);
+    const hasLoadingMessage = conversationMessages.some(msg => msg.isLoading);
     
     // Auto-scroll in these cases:
     // 1. New message added and user is near bottom
     // 2. First message in a new conversation
     // 3. User explicitly wants to stay at bottom (shouldAutoScroll = true)
+    // 4. During streaming to keep up with new content
     if ((isNewMessage && isNearBottom) || 
         (currentMessageCount === 1 && lastMessageCount === 0) ||
-        (shouldAutoScroll && !hasStreamingMessage)) {
+        (shouldAutoScroll && !hasLoadingMessage) ||
+        (hasStreamingMessage && isNearBottom)) {
       
-      // Small delay to ensure DOM is updated
+      // Small delay to ensure DOM is updated, shorter delay for streaming
+      const scrollDelay = hasStreamingMessage ? 10 : 50;
       setTimeout(() => {
-        if (messagesEndRef.current && shouldAutoScroll) {
-          messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        if (messagesEndRef.current && (shouldAutoScroll || hasStreamingMessage)) {
+          const behavior = hasStreamingMessage ? 'instant' : 'smooth';
+          messagesEndRef.current.scrollIntoView({ behavior: behavior as ScrollBehavior });
         }
-      }, 50);
+      }, scrollDelay);
     }
     
     setLastMessageCount(currentMessageCount);
   }, [conversationMessages.length, isNearBottom, shouldAutoScroll]);
 
-  // Reset auto-scroll when switching conversations
+  // Reset auto-scroll when switching conversations, but preserve during streaming
   useEffect(() => {
-    setShouldAutoScroll(true);
-    setIsNearBottom(true);
-    setLastMessageCount(0);
+    const hasActiveStreaming = conversationMessages.some(msg => msg.isStreaming || msg.isLoading);
+    
+    // Only reset scroll behavior if we're not in the middle of streaming
+    if (!hasActiveStreaming) {
+      setShouldAutoScroll(true);
+      setIsNearBottom(true);
+      setLastMessageCount(0);
+    }
   }, [activeConversation?.id]);
 
   const handleCopy = async (messageId: string, content: string) => {
@@ -253,7 +311,7 @@ export function ChatMessages({
 
   // Show empty state only if we have no conversation or no messages and we're not waiting for optimistic updates
   if (!activeConversation && conversationMessages.length === 0) {
-    return <ChatEmptyState onQuickAction={onQuickAction} />;
+    return <ChatEmptyState onQuickAction={onQuickAction} user={user} />;
   }
 
   // If we have an active conversation but no messages and we've never shown messages,

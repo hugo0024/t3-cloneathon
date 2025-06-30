@@ -6,6 +6,7 @@ import { useChat } from '@/contexts/ChatContext';
 import { ChatSidebar } from '@/components/ChatSidebar';
 import { ChatMessages } from '@/components/ChatMessages';
 import { ChatInput } from '@/components/ChatInput';
+
 import { SettingsModal } from '@/components/SettingsModal';
 import { useDynamicTitle } from '@/lib/useDynamicTitle';
 import { Key, Sparkles } from 'lucide-react';
@@ -21,6 +22,7 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
     conversations,
     setActiveConversation,
     activeConversation,
+    user,
   } = useChat();
   const [showSettings, setShowSettings] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -141,10 +143,12 @@ export function ChatPageContent({ chatId }: ChatPageContentProps) {
           />
         </div>
 
-        {/* Input Container - fixed height constraints */}
-        <div className="shrink-0 max-h-[300px] overflow-hidden">
-          <ChatInput quickActionPrompt={quickActionPrompt} />
-        </div>
+        {/* Input Container - only show for authenticated users */}
+        {user && (
+          <div className="shrink-0 max-h-[300px] overflow-hidden">
+            <ChatInput quickActionPrompt={quickActionPrompt} />
+          </div>
+        )}
       </motion.div>
     </motion.div>
   );
